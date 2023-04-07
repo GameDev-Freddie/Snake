@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<!--Code by GameDev Freddie - Youtube.com/@GameDev-Freddie-->
+<html>
+    <head>
+        <style>
+            body {
+                background-color: rgb(24, 24, 24);
+                color: white;
+                text-align: left;
+                font-family: 'Comic Sans MS', cursive, sans-serif;
+                font-size: 24px;
+            }
+            header, footer, .page-body {
+                padding-left: 50px;
+                padding-right: 50px;
+            }
+            header, footer {
+                background-color: rgb(18, 18, 18);
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+            }
+            .page-body {
+                background-color: rgb(28, 28, 28);
+                color: white;
+                height: 100%;
+                display: flex;
+                align-items: left;
+                justify-content: left;
+                padding-bottom: 20px;
+                padding-top: 20px;
+            }
+            .icon {
+                width: 70px;
+                height: 70px;
+                background-image: url("https://icons.veryicon.com/png/Application/Button%20UI%20Requests%2013/Snake.png");
+                background-size: cover;
+                margin-right: 20px;
+                margin-left: 20px;
+            }
+            .centered {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            h1 {
+                font-size: 40px;
+                margin-right: 100px;
+            }
+            .text {
+                padding-top: 30px;
+                padding-left: 50px;
+                color: white;
+            }
+            #gameover {
+                color: red;
+                font-size: 90px;
+                position: absolute;
+                top: 450px;
+                left: 210px;
+            }
+            #game {
+                background: rgb(3, 88, 3);
+                border: 1px solid white;
+            }
+        </style>
+    </head>
+    <body>
+        <header>
+            <div class ="centered">
+                <div class = "icon"></div>
+                <h1>Snake</h1>
+            </div>
+        </header>
+
+        <div class = "page-body">
+            <canvas width = "800" height = "800"id="game"></canvas>
+            <div id = "gameover" class = "gameover"></div>
+            <div>
+                <div class = "text">Controls: <br>Movement: WASD <br>Speed down: Q<br>Speed up: E</div>
+                <div id ="text" class = "text"></div>
+            </div>
+        </div>
+
+        <script>
+            var canvas = document.getElementById('game');
+            var context = canvas.getContext('2d');
+            const Text = document.getElementById("text");
+            const GameoverText = document.getElementById("gameover");
+            var grid = 16;
+            var count = 0;
+            var speed = 8;
+            var score = 0;
+            var highscore = 0;
+            var Directionlock = 0;
+            var GameOverTimer = 0;
+            var snake = {x:400, y:400, dx: grid, dy:0, cells: [4],maxCells: 4};
+            var apple = {x:220, y: 220};
+            UpdateScore(-1);
+            RandomizeApple();
+            function gameLoop()
+            {
+                if(GameOverTimer > 0)
+                {
+                    GameOverTimer -= 0.006;
+                    GameoverText.innerHTML = GameOverTimer > 0 ? "Gameover " + (GameOverTimer).toFixed(0).toString() : "";
+                    if(GameOverTimer <= 0)
+                    {
+                        snake.x = 400;
+                        snake.y = 400;
+                        snake.cells = [];
+                        snake.maxCells = 4;
+                        snake.dx = grid;
+                        snake.dy = 0;
+                        RandomizeApple();
+                        UpdateScore(-1);
+                    }
+                }else
+                {
+                    InputManagement();
+                    ClearCanvas();
+                    Movement();
+                    DrawGameFrame();
+                }
+                requestAnimationFrame(gameLoop);
+            }
+            function UpdateScore(amount) {
+                score = amount > 0 ? score + amount : 0;
+                highscore = score > highscore ? score : highscore;
+                Text.innerHTML = "Score: " + score + "<br>Highscore: "  + highscore + "<br>Speed: " + speed;    
+            }
+            function RandomizeApple() {
+                apple.x = Math.floor(Math.random() * 50) * grid; apple.y = Math.floor(Math.random() * 50) * grid;
+            }
+            function GameOver() {
+                GameOverTimer = 3;
+            }
+            function ClearCanvas() {
+                context.clearRect(0,0,canvas.width, canvas.height);
+            }
+            function DrawGameFrame() {
+                context.fillStyle = 'red';
+                context.beginPath();
+                context.arc(apple.x + grid/2, apple.y + grid/2, grid/2 - 1, 0, Math.PI * 2);
+                context.fill();
+                context.fillStyle = 'gray';
+                snake.cells.forEach(function(cell, index)
+                {
+                    context.fillRect(cell.x, cell.y, grid-1, grid-1);
+                    if(cell.x === apple.x && cell.y === apple.y)
+                    {
+                        snake.maxCells += 2;
+                        UpdateScore(2);
+                        RandomizeApple();
+                    }
+                    for (var i = index + 1; i < snake.cells.length; i++)
+                        if (cell.x === snake.cells[i].x && cell.y === snake.cells[i].y)
+                            GameOver();
+                });
+            }
+            function Movement() {
+                if(++count < speed)
+                    return;
+                if(Directionlock > 0)
+                    Directionlock --;
+                count = 0;
+                snake.x += snake.dx;
+                snake.y += snake.dy;
+                if(snake.x < 0 || snake.x >= canvas.width || snake.y < 0 || snake.y >= canvas.height)
+                    GameOver();
+                snake.cells.unshift({x:snake.x, y:snake.y});
+                if(snake.cells.length > snake.maxCells)
+                    snake.cells.pop();
+            }
+            function InputManagement() {
+                document.addEventListener('keydown', function(e)
+                {
+                    if(Directionlock == 0 && (e.code == "KeyA" && snake.dx === 0 || e.code == "KeyD" && snake.dx === 0))
+                    {
+                        Directionlock = 1;
+                        snake.dx = e.code === "KeyA" ? -grid : grid;
+                        snake.dy = 0;
+                    }else if(Directionlock == 0 && (e.code === "KeyW" && snake.dy === 0 || e.code == "KeyS" && snake.dy === 0))
+                    {
+                        Directionlock = 1;
+                        snake.dy = e.code == "KeyW" ? -grid : grid;
+                        snake.dx = 0;   
+                    }
+                    if (e.code === "KeyE" || e.code == "KeyQ")
+                        speed = (e.code == "KeyE" && speed > 4 ? speed-1 : e.code == "KeyQ" && speed < 9 ? speed+1 : speed);
+                });
+            }
+            gameLoop();
+        </script>
+
+        <footer class = "centered">
+            <div class = "centered">
+                <p>GameDev Freddie</p>
+            </div>
+        </footer>
+    </body>
+</html>
