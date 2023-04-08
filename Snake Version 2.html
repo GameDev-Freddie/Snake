@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<!-- Cody by GameDev Freddie - Youtube.com/@GameDev-Freddie -->
+<html>
+    <body Style = "background: lightslategray; color: #3b4961;">
+        <script>
+            const gameCanvas = document.createElement('canvas');
+            document.body.appendChild(gameCanvas);
+            const ctx = gameCanvas.getContext('2d');
+            const canvasSize = 800;
+            const gridSize = 40;
+            gameCanvas.id = 'gameCanvas';
+            gameCanvas.width = canvasSize;
+            gameCanvas.height = canvasSize;
+            gameCanvas.style.background = '#212837';
+            gameCanvas.style.border = '15px solid';
+            gameCanvas.style.borderColor = document.body.style.color;
+            gameCanvas.style.borderRadius = '25px';
+            gameCanvas.style.display = 'block';
+            gameCanvas.style.margin = 'auto';
+            gameCanvas.style.position = 'absolute';
+            gameCanvas.style.top = '50%';
+            gameCanvas.style.left = '50%';
+            gameCanvas.style.transform = 'translate(-50%, -50%)';
+            let snake = [{x:canvasSize/4, y:canvasSize/2}, {},{}];
+            let apple = {x:0,y:0};
+            let move = {x:gridSize,y:0};
+            document.addEventListener('keydown', InputManagement);
+            RandomizeApple();
+            gameLoop();
+            function gameLoop(){
+                Movement();
+                DrawGame();
+                if(CheckCollision()){
+                    alert('Game over! You got: ' + (snake.length > 2 ? snake.length - 2 : 0) + ' points!');
+                    gameCanvas.removeEventListener('keydown', InputManagement);
+                    location.reload();
+                }
+                if(snake[0].x === apple.x && snake[0].y === apple.y){
+                    RandomizeApple();
+                    snake.push({x: snake[snake.length - 1].x, y: snake[snake.length - 1].y})
+                }
+                setTimeout(gameLoop, 100);
+            }
+            function DrawGame(){
+                ctx.clearRect(0,0,canvasSize,canvasSize);
+                ctx.fillStyle = 'red';
+                ctx.beginPath();
+                ctx.arc(apple.x + gridSize/2, apple.y + gridSize/2, gridSize/2 - 1, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = document.body.style.color;
+                ctx.fillRect(0,0,canvasSize, gridSize*2);
+                snake.forEach(segment => {
+                    ctx.fillRect(segment.x, segment.y, gridSize, gridSize);
+                });
+                ctx.fillStyle = 'white';
+                ctx.font = '33px Comic Sans MS';
+                ctx.fillText('Score: ' + (snake.length > 2 ? snake.length - 2 : 0), 50,50);
+            }
+            function RandomizeApple(){
+                apple.x = Math.floor(Math.random() * canvasSize / gridSize) * gridSize;
+                apple.y = Math.floor(Math.random() * (canvasSize / gridSize - 2) + 2) * gridSize;
+            }
+            function Movement(){
+                snake.unshift({x: snake[0].x + move.x, y: snake[0].y + move.y});
+                snake.pop();
+            }
+            function InputManagement(event){
+                if(event.key == 'a' && move.x !== gridSize || event.key == 'd' && move.x !== -gridSize ||
+                    event.key == 'w' && move.y !== gridSize || event.key == 's' && move.y !== -gridSize){
+                move.x = event.key == 'a' ? -gridSize : event.key == 'd' ? gridSize : event.key == 'w' ? 0 : event.key == 's' ? 0 : move.x;
+                move.y = event.key == 'w' ? -gridSize : event.key == 's' ? gridSize : event.key == 'a' ? 0 : event.key == 'd' ? 0 : move.y;
+            }}
+            function CheckCollision(){
+                for(let i = 1; i < snake.length; i++)
+                    if(snake[0].x === snake[i].x && snake[0].y === snake[i].y)
+                        return true;
+                return (snake[0].x < 0 || snake[0].x >= canvasSize || snake[0].y < gridSize*2 || snake[0].y >= canvasSize);
+            }            
+        </script>
+    </body>
+</html>
